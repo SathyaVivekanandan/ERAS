@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning server.js",
     "reset-db": "node --disable-warning=ExperimentalWarning src/db/reset.js",
-    "test": "node --disable-warning=ExperimentalWarning --test tests/*.test.js"
+    "test": "node --disable-warning=ExperimentalWarning --test tests/*.test.js",
+    "test:ui": "node --disable-warning=ExperimentalWarning tests/ui/run.js"
   },
   "engines": {
     "node": ">=22.13.0"
