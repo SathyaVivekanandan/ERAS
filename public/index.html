@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ERAS – Sign in</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%23d62839%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2220%22 font-family=%22Arial%22 font-weight=%22700%22 fill=%22white%22 text-anchor=%22middle%22%3EE%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <main class="login-wrap">
+    <div class="panel login-card">
+      <div class="login-title">
+        <div class="brand-mark" style="color:#fff" aria-hidden="true">E</div>
+        <div>
+          <h1 style="font-size:20px">ERAS</h1>
+          <div class="muted small">Emergency Route Advisory System</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="notice notice-warn">
+          <strong>Demonstration prototype.</strong> All hospitals, routes, traffic and notifications are
+          SIMULATED DEMO DATA. No real police, hospital or emergency service is contacted.
+        </div>
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+          </div>
+          <div id="login-error" class="notice notice-bad" role="alert" hidden></div>
+          <button class="btn btn-danger btn-block" type="submit" id="login-btn">Sign in</button>
+        </form>
+        <div style="margin-top:14px">
+          <div class="small muted">Demo accounts (password is <code>DEMO_PASSWORD</code> from <code>.env</code>):</div>
+          <div class="demo-accounts">
+            <button class="btn btn-sm" type="button" data-user="driver1">driver1</button>
+            <button class="btn btn-sm" type="button" data-user="driver2">driver2</button>
+            <button class="btn btn-sm" type="button" data-user="police_chennai">police_chennai</button>
+            <button class="btn btn-sm" type="button" data-user="police_trichy">police_trichy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="/js/common.js"></script>
+  <script>
+    (async () => {
+      // Already signed in? Go straight to the right dashboard.
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+        if (res.ok) {
+          const { user } = await res.json();
+          location.href = ERAS.ROLE_HOME[user.role] || '/';
+          return;
+        }
+      } catch { /* server offline: the form will show the error */ }
+    })();
+
+    document.querySelectorAll('[data-user]').forEach((b) => b.addEventListener('click', () => {
+      document.getElementById('username').value = b.dataset.user;
+      document.getElementById('password').focus();
+    }));
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorBox = document.getElementById('login-error');
+      const btn = document.getElementById('login-btn');
+      errorBox.hidden = true;
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+      try {
+        const { user } = await ERAS.api('POST', '/api/auth/login', {
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value,
+        });
+        location.href = ERAS.ROLE_HOME[user.role] || '/';
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.hidden = false;
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+      }
+    });
+  </script>
+</body>
+</html>
