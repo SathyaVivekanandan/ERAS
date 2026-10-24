@@ -114,7 +114,8 @@ Point at the yellow **SIMULATED DEMO DATA** pill and the demo banner.
 | "Does Trichy work?" | Cancel the trip and switch City to **Tiruchirappalli**. It has its own fictional hospitals, demo origins and all scenarios. Requests go to `police_trichy`, not Chennai. |
 | "Can a driver change the status?" | No. The server allows only police of the request's city to change it, and only along valid transitions. This is covered by the API tests. |
 | "What if police aren't online?" | The request is still saved. The driver is told *"No police dashboard is open right now; it will appear when one is opened."* |
-| "How do you know it works?" | `npm test` (49 API tests) and `npm run test:ui` (39 browser checks across two sessions). See [TEST_RESULTS.md](TEST_RESULTS.md). |
+| "Is the hospital directory really shared?" | In a third session, log in as **`admin`**, edit a Chennai hospital (for example give Riverside Nursing Home **a phone number your team owns, such as a teammate's mobile, never a random number**, mark it Verified, and confirm availability naming a source), then **Save**. The driver's hospital list updates without a reload, and its details now show **Call Hospital** and who confirmed availability. Open **Change history** in the admin form to show the audit trail. Run `npm run reset-db` afterwards to restore the demo data. |
+| "How do you know it works?" | `npm test` (50 API tests) and `npm run test:ui` (49 browser checks across separate driver, police and admin sessions). See [TEST_RESULTS.md](TEST_RESULTS.md). |
 
 ---
 

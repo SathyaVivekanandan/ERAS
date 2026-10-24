@@ -1,14 +1,14 @@
 # ERAS – Test Checklist and Actual Results
 
-**Recorded:** 25 Oct 2026 · Windows 11 · Node.js v24.14.1 · Microsoft Edge (headless) · commit after `69347ad`
+**Recorded:** 25 Oct 2026 · Windows 11 · Node.js v24.14.1 · Microsoft Edge (headless) · commit after `efd565d` (admin page added)
 
 Only tests that were **actually executed** are marked ✅. Items that were not executed are marked ⚠️, with a
 note on how to check them by hand.
 
 | Suite | Command | Result |
 |---|---|---|
-| API tests (in-memory database) | `npm test` | **49 / 49 passed** |
-| Browser end-to-end (driver and police in two separate headless browser sessions) | `npm run test:ui` | **39 / 39 passed** |
+| API tests (in-memory database) | `npm test` | **50 / 50 passed** |
+| Browser end-to-end (driver, police and admin in separate headless browser sessions) | `npm run test:ui` | **49 / 49 passed** |
 
 How to re-run: see [README → Running the tests](../README.md#running-the-tests).
 
@@ -74,6 +74,17 @@ How to re-run: see [README → Running the tests](../README.md#running-the-tests
 | Scenarios supported in both cities | ✅ | API: assistance tests run severe-congestion trips in **both** Chennai and Trichy |
 | Map recentres on the new city | ⚠️ Not asserted | It recentres in code (`fitCity`). Check by eye when switching |
 
+### Shared hospital directory (admin)
+
+| Step | Result | Evidence |
+|---|---|---|
+| Admin edits a hospital in the browser | ✅ | UI: *admin save succeeds and table updates* |
+| Demo placeholder number cannot be marked Verified | ✅ | UI: *demo placeholder number cannot be marked Verified*; API: *a demo placeholder number cannot be marked verified* |
+| Confirming availability requires a source and records a time | ✅ | API: *confirming availability requires a source and records a timestamp*; UI: *driver details: availability confirmed with source* |
+| Edit reflected on the driver dashboard without reload | ✅ | UI: *driver list shows the new number live*, *driver details: Call Hospital now offered* |
+| Change history (who, what, when) | ✅ | UI: *change history shows the edit*; API: *admin can read a hospital change history; others cannot* |
+| Only admin can edit or open the admin page | ✅ | API: *only admin can edit hospitals*; UI: *driver cannot open admin page* |
+
 ---
 
 ## Defects found during testing and fixed
@@ -85,12 +96,13 @@ How to re-run: see [README → Running the tests](../README.md#running-the-tests
 | Browser check (screenshot) | Current status step had white text on light grey (unreadable) | Status colours now apply to the current step |
 | Browser check | Missing page icon caused a 404 browser error | Added an inline icon |
 | Code review | Police page showed "Live" before the event stream connected | The indicator is set only by the real connection |
+| Browser check (screenshot) | Admin change history showed raw stored values and ISO timestamps | Readable labels and local date/time |
 
 ---
 
 ## Full list of executed checks
 
-### API tests – `npm test` (49 / 49 passed)
+### API tests – `npm test` (50 / 50 passed)
 
 - ✅ no request when a suitable alternative exists (moderate congestion)
 - ✅ no request with stale or unavailable data
@@ -125,6 +137,7 @@ How to re-run: see [README → Running the tests](../README.md#running-the-tests
 - ✅ a demo placeholder number cannot be marked verified
 - ✅ confirming availability requires a source and records a timestamp
 - ✅ admin edits are shared: the driver sees the change and it is audited
+- ✅ admin can read a hospital change history; others cannot
 - ✅ only drivers can use trips
 - ✅ missing origin or destination is rejected
 - ✅ normal traffic: three ranked simulated routes, no assistance recommended
@@ -142,7 +155,7 @@ How to re-run: see [README → Running the tests](../README.md#running-the-tests
 - ✅ trip state survives a reload (stored in the database)
 - ✅ completing a trip ends it; completed trips cannot be changed
 
-### Browser checks – `npm run test:ui` (39 / 39 passed)
+### Browser checks – `npm run test:ui` (49 / 49 passed)
 
 **Traffic police dashboard (empty)**
 
@@ -194,9 +207,22 @@ How to re-run: see [README → Running the tests](../README.md#running-the-tests
 - ✅ police history: 4 entries with names
 - ✅ police summary: solved 1, nothing open
 
+**Shared hospital directory: admin edit reaches the driver**
+
+- ✅ admin login opens admin page
+- ✅ admin table lists 6 Chennai hospitals
+- ✅ demo placeholder number cannot be marked Verified
+- ✅ admin save succeeds and table updates
+- ✅ change history shows the edit
+- ✅ no browser console errors (admin)
+- ✅ driver list shows the new number live
+- ✅ driver details: Call Hospital now offered
+- ✅ driver details: availability confirmed with source
+
 **Test 4: refresh and role protection**
 
 - ✅ police reload: records consistent
 - ✅ driver reload: Solved still shown
 - ✅ driver cannot open police dashboard
+- ✅ driver cannot open admin page
 - ✅ no browser console errors

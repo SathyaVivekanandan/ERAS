@@ -117,6 +117,45 @@ async function main() {
     await police.shot('5-police-solved');
     await driver.shot('6-driver-solved');
 
+    console.log('\n-- Shared hospital directory: admin edit reaches the driver --');
+    const admin = await openBrowser({ port: 9336, outDir: OUT });
+    try {
+      record('admin login opens admin page', await login(admin, 'admin', '/admin.html'));
+      record('admin table lists 6 Chennai hospitals', await admin.waitFor("document.querySelectorAll('#hospital-rows tr').length === 6"));
+      await admin.click('[data-edit="ch-h1"]');
+      await admin.waitFor("document.querySelector('#edit-dialog').open");
+      await admin.evaluate("document.querySelector('#f-phone-status').value = 'verified'; true");
+      await admin.click('#edit-save');
+      record('demo placeholder number cannot be marked Verified', await admin.waitFor("!document.querySelector('#edit-error').hidden && document.querySelector('#edit-error').innerText.includes('dialable')"));
+      await admin.click('#edit-cancel');
+
+      await admin.click('[data-edit="ch-h6"]');
+      await admin.waitFor("document.querySelector('#edit-dialog').open");
+      await admin.evaluate(`{
+        const set = (id, v) => { const el = document.querySelector(id); el.value = v; el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('change')); };
+        set('#f-phone', '+91 00000 00000'); set('#f-phone-status', 'verified');
+        set('#f-availability', 'confirmed_by_authorized_source'); set('#f-source', 'Demo duty manager by phone (fictional)');
+      } true`);
+      await admin.click('#edit-save');
+      record('admin save succeeds and table updates', await admin.waitFor("!document.querySelector('#edit-dialog').open && document.querySelector('#hospital-rows').innerText.includes('+91 00000 00000')"));
+      await admin.click('[data-edit="ch-h6"]');
+      await admin.waitFor("document.querySelector('#edit-dialog').open");
+      await admin.evaluate("document.querySelector('#history-box').open = true; true");
+      record('change history shows the edit', await admin.waitFor("document.querySelector('#history-list').innerText.includes('Contact number')"));
+      await admin.shot('7-admin-edit-history');
+      await admin.click('#edit-cancel');
+      record('no browser console errors (admin)', admin.relevantErrors().length === 0, admin.relevantErrors().slice(0, 3).join(' | '));
+    } finally {
+      await admin.close();
+    }
+    record('driver list shows the new number live', await driver.waitFor("[...document.querySelectorAll('.h-card')].some(c => c.innerText.includes('+91 00000 00000') && c.innerText.includes('(verified)'))", 5000));
+    await driver.click('[data-action="details"][data-id="ch-h6"]');
+    await driver.waitFor("document.querySelector('#hospital-dialog').open");
+    record('driver details: Call Hospital now offered', await driver.evaluate("[...document.querySelectorAll('#hd-foot a')].some(a => a.textContent.includes('Call Hospital') && a.getAttribute('href') === 'tel:+910000000000')"));
+    record('driver details: availability confirmed with source', (await driver.text('#hd-body')).includes('Availability Confirmed by Authorized Source') && (await driver.text('#hd-body')).includes('Demo duty manager'));
+    await driver.shot('8-driver-sees-admin-edit');
+    await driver.click('#hd-close');
+
     console.log('\n-- Test 4: refresh and role protection --');
     await police.send('Page.reload');
     record('police reload: records consistent', await police.waitFor("document.querySelector('#s-solved').innerText === '1'", 8000));
@@ -124,6 +163,8 @@ async function main() {
     record('driver reload: Solved still shown', await driver.waitFor("document.querySelector('#assist-badge')?.innerText.includes('Solved')", 8000));
     await driver.goto(`${BASE}/police.html`);
     record('driver cannot open police dashboard', await driver.waitFor("location.pathname === '/driver.html'"));
+    await driver.goto(`${BASE}/admin.html`);
+    record('driver cannot open admin page', await driver.waitFor("location.pathname === '/driver.html'"));
 
     const errs = [...police.relevantErrors(), ...driver.relevantErrors()];
     record('no browser console errors', errs.length === 0, errs.slice(0, 4).join(' | '));

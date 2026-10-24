@@ -291,3 +291,9 @@ dialog::backdrop { background: rgba(15, 29, 51, .45); }
   .notif-menu { position: fixed; left: 8px; right: 8px; top: 120px; width: auto; }
   .map-legend { display: none; }
 }
+
+/* ---- Admin page ------------------------------------------------------------------ */
+.admin-table td { vertical-align: top; }
+.admin-table td .small { display: block; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }

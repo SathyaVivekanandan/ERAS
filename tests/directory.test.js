@@ -134,3 +134,14 @@ test('admin edits are shared: the driver sees the change and it is audited', asy
   const audit = t.db.prepare("SELECT * FROM audit_log WHERE entity_id = 'tr-h4'").all();
   assert.equal(audit.length, 1);
 });
+
+test('admin can read a hospital change history; others cannot', async () => {
+  const res = await t.api('GET', '/api/hospitals/tr-h4/audit', { cookie: admin });
+  assert.equal(res.status, 200);
+  assert.equal(res.body.entries.length, 1);
+  assert.equal(res.body.entries[0].by, 'Demo Hospital Directory Admin');
+  const fields = res.body.entries[0].changes.map((c) => c.field);
+  assert.ok(fields.includes('emergency_capability') && fields.includes('phone_status'));
+  assert.equal((await t.api('GET', '/api/hospitals/tr-h4/audit', { cookie: driver })).status, 403);
+  assert.equal((await t.api('GET', '/api/hospitals/zz-h9/audit', { cookie: admin })).status, 404);
+});

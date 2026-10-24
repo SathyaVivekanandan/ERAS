@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ERAS – Hospital Directory Admin</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%23d62839%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2220%22 font-family=%22Arial%22 font-weight=%22700%22 fill=%22white%22 text-anchor=%22middle%22%3EE%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">E</div>
+      <div>
+        <div class="brand-name">ERAS</div>
+        <div class="brand-sub">Hospital Directory Admin</div>
+      </div>
+    </div>
+    <div>
+      <label for="city-select">City</label>
+      <select id="city-select" aria-label="City"></select>
+    </div>
+    <span class="pill pill-demo">Fictional demo hospitals</span>
+    <div class="user-chip">
+      <div><div id="user-name">—</div><div class="role">Directory admin (demo)</div></div>
+      <button class="btn btn-ghost btn-sm" type="button" id="logout-btn">Log out</button>
+    </div>
+  </header>
+  <div class="demo-banner">
+    Changes are saved to the shared directory and shown on the driver and police dashboards immediately.
+    Mark a phone number or availability as verified/confirmed <strong>only</strong> when an authorized source has confirmed it.
+  </div>
+
+  <main style="padding:12px">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Hospitals <span class="muted small" id="hospital-count"></span></h2>
+      </div>
+      <div class="panel-body table-scroll">
+        <table class="routes-table admin-table">
+          <thead>
+            <tr><th>Hospital</th><th>Contact number</th><th>Emergency capability</th><th>Availability</th><th>Last updated</th><th></th></tr>
+          </thead>
+          <tbody id="hospital-rows"><tr><td colspan="6" class="loading">Loading hospitals…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="edit-dialog" aria-labelledby="edit-title">
+    <form id="edit-form" novalidate>
+      <div class="dialog-head">
+        <div><h2 id="edit-title" style="font-size:17px">Edit hospital</h2><div class="small" style="opacity:.8" id="edit-sub"></div></div>
+        <button class="icon-btn" type="button" id="edit-close" aria-label="Close">×</button>
+      </div>
+      <div class="dialog-body">
+        <div class="field"><label for="f-name">Name</label><input id="f-name" maxlength="200" required></div>
+        <div class="field"><label for="f-address">Address</label><input id="f-address" maxlength="200" required></div>
+        <div class="form-row">
+          <div class="field"><label for="f-phone">Contact number (blank = none)</label><input id="f-phone" maxlength="30"></div>
+          <div class="field"><label for="f-phone-status">Number status</label>
+            <select id="f-phone-status">
+              <option value="verified">Verified (dialable)</option>
+              <option value="unverified">Unverified</option>
+              <option value="demo_placeholder">Demo placeholder</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label for="f-capability">Emergency capability</label>
+            <select id="f-capability">
+              <option value="verified">Verified</option>
+              <option value="unverified">Unverified</option>
+            </select>
+          </div>
+          <div class="field"><label for="f-note">Verification note</label><input id="f-note" maxlength="200"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label for="f-availability">Availability</label>
+            <select id="f-availability">
+              <option value="not_connected">Not connected</option>
+              <option value="confirmed_by_authorized_source">Confirmed by authorized source</option>
+            </select>
+          </div>
+          <div class="field" id="source-field"><label for="f-source">Confirmed by (required)</label><input id="f-source" maxlength="200" placeholder="e.g. Hospital duty manager by phone"></div>
+        </div>
+        <p class="small muted" id="availability-help" style="margin:0 0 8px"></p>
+        <div id="edit-error" class="notice notice-bad" role="alert" hidden></div>
+        <details id="history-box">
+          <summary class="small">Change history</summary>
+          <div id="history-list" class="small" style="margin-top:6px"></div>
+        </details>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn" type="button" id="edit-cancel">Cancel</button>
+        <button class="btn btn-primary" type="submit" id="edit-save">Save changes</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/js/common.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

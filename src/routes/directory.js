@@ -214,6 +214,17 @@ module.exports = function directoryRoutes({ db, hub }) {
     res.json({ hospital, changed });
   }));
 
+  // Admin-only: who changed this hospital record, what changed, and when (newest first).
+  router.get('/hospitals/:id/audit', requireRole('admin'), handle((req, res) => {
+    const h = look.getHospital(req.params.id);
+    const rows = db.prepare(`SELECT a.details, a.created_at, u.display_name FROM audit_log a LEFT JOIN users u ON u.id = a.user_id
+      WHERE a.entity = 'hospital' AND a.entity_id = ? ORDER BY a.id DESC LIMIT 50`).all(h.id);
+    res.json({
+      hospitalId: h.id,
+      entries: rows.map((r) => ({ by: r.display_name, at: r.created_at, changes: JSON.parse(r.details).changed })),
+    });
+  }));
+
   return router;
 };
 

@@ -47,7 +47,12 @@ Other documents: [Judge demo script](docs/DEMO_SCRIPT.md) · [Test checklist and
 - Request details: route map, congestion zones, ETA countdown with uncertainty, reasons each alternative was rejected, status history.
 - Actions: **Acknowledge → Start Assistance → Mark Solved**, or **Unable to Resolve** (a reason is required). The server rejects invalid transitions.
 
-**Shared hospital directory.** Both dashboards read the same `hospitals` table. Admin edits (API only, see limitations) are audited and pushed live to open dashboards.
+**Hospital Directory Admin** (`/admin.html`)
+- Table of each city's hospitals with contact-number status, emergency capability and availability.
+- Edit a hospital in a form. A number can be marked **Verified** only if it is really dialable, and confirming availability requires naming who confirmed it (the time is recorded).
+- Change history for each hospital shows who changed which field, and when.
+
+**Shared hospital directory.** All three pages read the same `hospitals` table. Admin edits are audited and pushed live to open dashboards, so a driver looking at the list sees the change without reloading.
 
 **How the two dashboards are connected:** one Express server and one SQLite database. The driver's request is saved once. Police read and update that same record. Changes are pushed with Server-Sent Events, and both pages also re-check the server every 10 seconds in case the live connection drops.
 
@@ -107,7 +112,7 @@ is applied (passwords are only set when the database is first created).
 | `driver2` | Ambulance driver | Second driver, cannot see `driver1`'s trips |
 | `police_chennai` | Traffic police | Receives only Chennai requests |
 | `police_trichy` | Traffic police | Receives only Trichy requests |
-| `admin` | Hospital directory admin | API only, no admin page yet |
+| `admin` | Hospital directory admin | Opens the admin page for editing hospitals |
 
 Every account uses the password in `DEMO_PASSWORD`. If no `.env` file exists, the password falls back to `demo123`.
 
@@ -131,8 +136,8 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 ## Running the tests
 
 ```powershell
-npm test           # 49 API tests, using a temporary in-memory database
-npm run test:ui    # 39 browser checks: driver + police in two separate headless browser sessions
+npm test           # 50 API tests, using a temporary in-memory database
+npm run test:ui    # 49 browser checks: driver, police and admin in separate headless browser sessions
 ```
 
 - `test:ui` needs Microsoft Edge or Google Chrome installed (set `BROWSER_PATH` if it isn't found).
@@ -186,7 +191,7 @@ src/
   db/index.js              Opens DB, creates tables, seeds on first run
   db/reset.js              npm run reset-db
   routes/auth.js           Login / logout / me
-  routes/directory.js      Cities, origins, scenarios, hospitals (+ admin edit)
+  routes/directory.js      Cities, origins, scenarios, hospitals (+ admin edit and change history)
   routes/trips.js          Destination, route comparison, scenario switch, start/complete/cancel
   routes/assistance.js     Create request, list, summary, details, police status changes
   routes/notifications.js  In-app notifications and the live event stream (/api/events)
@@ -198,6 +203,7 @@ public/
   index.html               Login
   driver.html, js/driver.js   Ambulance Driver Dashboard
   police.html, js/police.js   Traffic Police Dashboard
+  admin.html, js/admin.js     Hospital Directory Admin
   css/app.css, js/common.js   Shared styles and helpers
 tests/                     API tests (npm test)
 tests/ui/                  Browser end-to-end check (npm run test:ui)
@@ -235,6 +241,7 @@ All endpoints return JSON. Except for login and the health check, they require a
 | `GET /api/hospitals?city=&originId=` (or `&lat=&lng=`) `&scenario=&q=` | logged in | Nearby hospitals with simulated estimates |
 | `GET /api/hospitals/:id` | logged in | Hospital details |
 | `PATCH /api/hospitals/:id` | admin | Edit a hospital (audited) |
+| `GET /api/hospitals/:id/audit` | admin | Change history for a hospital |
 | `POST /api/trips`, `GET /api/trips/current`, `GET /api/trips/:id` | driver | Plan a trip and compare routes |
 | `PATCH /api/trips/:id/scenario` | driver | Switch or refresh the simulated scenario |
 | `POST /api/trips/:id/select-route`, `/start`, `/complete`, `/cancel` | driver | Trip actions |
@@ -253,7 +260,7 @@ All endpoints return JSON. Except for login and the health check, they require a
 - **Route geometry is approximate.** Lines are curves between two points, not real roads, and ETAs come from assumed speeds (about ±40% uncertainty is stated in the UI).
 - **"Solved" changes only the record, not the route.** Marking a request Solved does not change the routes or ETA. The driver can switch scenario to recompute (the UI says "ETA not recalculated").
 - **Hospital availability is never confirmed in the seed data.** Every hospital shows "Availability Not Connected". An admin can mark availability as confirmed, but only by naming a source, and a timestamp is recorded.
-- **No admin page.** Hospital edits are made through `PATCH /api/hospitals/:id` as `admin` (covered by API tests). Logging in as `admin` in the browser leads to a page that doesn't exist.
+- **Simple admin page.** It edits existing hospitals only. It cannot add or delete hospitals, manage users, or edit cities and demo origins (change `src/db/seed-data.js` and run `npm run reset-db` for those).
 - **One open trip per driver.** A driver who already has a trip planned or started can't plan another until it is completed or cancelled.
 - **Simplified police city routing.** A police account sees one city's requests. There are no officer assignments or areas within a city.
 - **Separate browser sessions needed.** Driver and police must use different browser sessions (for example an InPrivate window).
