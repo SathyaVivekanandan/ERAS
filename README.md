@@ -282,3 +282,5 @@ All endpoints return JSON. Except for login and the health check, they require a
 | "Assistance not requested: … stale" | Route data is older than `STALE_AFTER_MINUTES`. Press **Refresh** on the trip panel |
 | `npm run test:ui` can't find a browser | Set `BROWSER_PATH` to your Edge or Chrome executable |
 | `node:sqlite` not found | Upgrade Node.js to 22.13 or newer |
+#   E R A S  
+ 
