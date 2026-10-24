@@ -5,19 +5,89 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ERAS – Traffic Police</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%23d62839%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2220%22 font-family=%22Arial%22 font-weight=%22700%22 fill=%22white%22 text-anchor=%22middle%22%3EE%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
-  <!-- Placeholder: the police dashboard is the next build step. The API it will use already works. -->
   <header class="topbar">
-    <div class="brand"><div class="brand-mark" aria-hidden="true">E</div><div><div class="brand-name">ERAS</div><div class="brand-sub">Traffic Police</div></div></div>
-    <button class="btn btn-ghost btn-sm" type="button" onclick="ERAS.logout()">Log out</button>
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">E</div>
+      <div>
+        <div class="brand-name">ERAS</div>
+        <div class="brand-sub">Traffic Police Dashboard · <span id="city-name">—</span></div>
+      </div>
+    </div>
+    <span class="pill pill-demo" title="All requests come from the ERAS demo">Simulated demo data</span>
+    <span class="pill pill-ok" title="Live connection to the ERAS server"><span class="live-dot" id="live-dot"></span><span id="live-text">Connecting…</span></span>
+    <div style="position:relative">
+      <button class="btn btn-ghost btn-sm" type="button" id="bell-btn" aria-haspopup="true" aria-expanded="false">
+        Notifications <span class="bell-count" id="bell-count" hidden>0</span>
+      </button>
+      <div class="notif-menu panel" id="notif-menu" hidden>
+        <div class="panel-head"><h2>In-app notifications</h2></div>
+        <div class="small muted" style="padding:0 14px 6px">Demo only – no SMS, call or real police message is sent.</div>
+        <div id="notif-list" class="notif-list"></div>
+      </div>
+    </div>
+    <div class="user-chip">
+      <div><div id="user-name">—</div><div class="role">Traffic police (demo)</div></div>
+      <button class="btn btn-ghost btn-sm" type="button" id="logout-btn">Log out</button>
+    </div>
   </header>
-  <main style="padding:24px"><div class="panel"><div class="panel-body" style="padding:18px">
-    <h2>Traffic police dashboard – coming in the next build step</h2>
-    <p class="muted">Assistance requests are already stored and delivered by the backend.</p>
-  </div></div></main>
+  <div class="demo-banner">
+    DEMONSTRATION PROTOTYPE – requests are internal in-app records. <strong>"Solved" means the demo request was marked resolved by the police demo user</strong>; it does not confirm that a real road was cleared.
+  </div>
+
+  <section class="summary-row" aria-label="Request summary" id="summary">
+    <div class="stat"><div class="stat-num" id="s-newUnread">–</div><div class="stat-label">New (unread)</div></div>
+    <div class="stat"><div class="stat-num" id="s-awaitingAcknowledgement">–</div><div class="stat-label">Awaiting acknowledgement</div></div>
+    <div class="stat"><div class="stat-num" id="s-acknowledged">–</div><div class="stat-label">Acknowledged</div></div>
+    <div class="stat"><div class="stat-num" id="s-inProgress">–</div><div class="stat-label">In progress</div></div>
+    <div class="stat"><div class="stat-num" id="s-solved">–</div><div class="stat-label">Solved (demo)</div></div>
+    <div class="stat"><div class="stat-num" id="s-unableToResolve">–</div><div class="stat-label">Unable to resolve</div></div>
+    <div class="stat stat-alert"><div class="stat-num" id="s-overdue">–</div><div class="stat-label">Past ETA, still open</div></div>
+  </section>
+
+  <main class="police-layout">
+    <section class="panel col-list" aria-label="Assistance requests">
+      <div class="panel-head">
+        <h2>Assistance requests</h2>
+        <div class="tabs" role="tablist">
+          <button class="tab active" type="button" role="tab" data-filter="open" aria-selected="true">Open</button>
+          <button class="tab" type="button" role="tab" data-filter="closed" aria-selected="false">Closed</button>
+          <button class="tab" type="button" role="tab" data-filter="all" aria-selected="false">All</button>
+        </div>
+      </div>
+      <div class="small muted" style="padding:0 14px 8px">Open requests first: New, then Acknowledged, then In Progress; soonest simulated ETA first.</div>
+      <div id="request-list" class="request-list"><div class="loading" style="padding:14px">Loading requests…</div></div>
+    </section>
+
+    <section class="panel col-detail" aria-label="Request details" id="detail-panel">
+      <div id="detail-empty" class="empty" style="padding:60px 20px">Select a request to see its details, map and actions.</div>
+      <div id="detail" hidden>
+        <div class="panel-head">
+          <div><h2 id="d-title">Request</h2><div class="small muted" id="d-sub"></div></div>
+          <span id="d-badge"></span>
+        </div>
+        <div class="detail-grid">
+          <div>
+            <div class="detail-map-wrap"><div id="detail-map"></div></div>
+            <div class="small muted" style="margin-top:4px">Route lines and congestion zones are SIMULATED demo geometry, not real roads.</div>
+          </div>
+          <div id="d-timing"></div>
+        </div>
+        <div class="section" id="d-info"></div>
+        <div class="section" id="d-routes"></div>
+        <div class="section" id="d-actions"></div>
+        <div class="section" id="d-history"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="/js/common.js"></script>
-  <script>ERAS.requireUser().catch(() => {});</script>
+  <script src="/js/police.js"></script>
 </body>
 </html>
